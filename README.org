@@ -23,7 +23,8 @@
         page number is inserted automatically over the octothorpes.
      2. "i".  The fundamental =org-noter-insert-note=.  User types note title
         into the minibuffer.
-** Note insertion desired features
+
+** Note insertion desired features (WIP)
    1. The position of the precise note should be at the click (with a
       configurable horizontal offset) or at the upper-left of the selected text
       (or configurable to one of the corners or ends of the selected area).
@@ -34,7 +35,58 @@
    4. Add property and/or configuration to make the arrow left or right
       pointing.
 
+** Note logic map/table
+   1. Is there an existing note for the page (from =i= or =TAB=)?
+   2. Is there pre-selected text? (is there a lot of pre-selected text?)
+   3. Has the user supplied any text to the "note:" prompt?
+   4. Is the insertion command
+      a. =M-i=
+      b. =i=
+      c. =TAB= (in which case 3 is always false)
+
+
+   So (a prioi) we have 8 + 8 + 4 possibilites, but prior notes don't seem to
+   always matter, and there are short and long text selections:
+   | 1234 | title             | body                   | desired title    | desired body | arrow pos   | notes             |
+   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
+   | -FFa | Notes for page () | none                   | OK               | OK           | horiz error | click             |
+   | -FTa | text              | none                   | OK               | OK           | horiz error | click             |
+   | -tFa | selected text     | none                   | OK               | OK           | OK          | "short" selection |
+   | -TFa | Notes for page () | selected txt           | OK               | OK           | OK          | "long" selection  |
+   | -tTa | text              | none                   | OK               | selected txt | OK          | "short" selection |
+   | -TTa | Notes for page () | selected txt           | text             | OK           | OK          | "long" selection  |
+   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
+   | -FFb | no action         | none                   | OK               | OK           |             |                   |
+   | -FTb | text              | none                   | OK               | OK           |             |                   |
+   | FTFb | no heading        | selected txt to buffer | Notes for page # | OK           |             |                   |
+   | TTFb | no heading        | selected txt to buffer | OK               | OK           |             |                   |
+   | -TTb | text              | none                   | OK               | selected txt |             |                   |
+   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
+   | FFFc | Notes for page #  | none                   | OK               | OK           |             |                   |
+   | FTFc | Notes for page #  | none                   | OK               | selected txt |             |                   |
+   | TFFc | Notes for page #  | none                   | no action        | no action    |             |                   |
+   | TTFc | Notes for page #  | none                   | use existing     | selected txt |             |                   |
+
+   A posteriori, I find that there are 6 + 5 + 4 possibilities, 8 of which I
+   would alter:
+   | 1234 | title             | body                   | desired title    | desired body | arrow pos   | notes             |
+   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
+   | -FFa | Notes for page () | none                   | OK               | OK           | horiz error | click             |
+   | -FTa | text              | none                   | OK               | OK           | horiz error | click             |
+   | -tTa | text              | none                   | OK               | selected txt | OK          | "short" selection |
+   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
+   | FTFb | no heading        | selected txt to buffer | Notes for page # | OK           |             |                   |
+   | -TTb | text              | none                   | OK               | selected txt |             |                   |
+   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
+   | FTFc | Notes for page #  | none                   | OK               | selected txt |             |                   |
+   | TFFc | Notes for page #  | none                   | no action        | no action    |             |                   |
+   | TTFc | Notes for page #  | none                   | use existing     | selected txt |             |                   |
+
+
+
+
+
+
 ** Bugs to fix
    1. Navigation of nested notes is spotty. =C-M-p= and =C-M-.= have trouble
       detecting nested notes.
-
