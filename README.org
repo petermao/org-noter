@@ -36,55 +36,69 @@
       pointing.
 
 ** Note logic map/table
-   1. Is there an existing note for the page (from =i= or =TAB=)?
-   2. Is there pre-selected text? (is there a lot of pre-selected text?)
-   3. Has the user supplied any text to the "note:" prompt?
-   4. Is the insertion command
+   1. Is there an existing note for the page (from =i= or =TAB=)?  Presently,
+      this doesn't matter.  "Existing note" implementation is =selection= (#4
+      below).
+   2. Is there =selected-text=? (is it more than three lines? (=quote-p=))
+   3. Is the insertion command
       a. =M-i=
       b. =i=
       c. =TAB= (in which case 3 is always false)
+   4. Has the user supplied a =title= for the "Note:" prompt?
+      does the title match a prior note title (=selection=)? then add
+      =selected-text= to note with =title == selection=
 
 
    So (a prioi) we have 8 + 8 + 4 possibilites, but prior notes don't seem to
    always matter, and there are short and long text selections:
-   | 1234 | title             | body                   | desired title    | desired body | arrow pos   | notes             |
-   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
-   | -FFa | Notes for page () | none                   | OK               | OK           | horiz error | click             |
-   | -FTa | text              | none                   | OK               | OK           | horiz error | click             |
-   | -tFa | selected text     | none                   | OK               | OK           | OK          | "short" selection |
-   | -TFa | Notes for page () | selected txt           | OK               | OK           | OK          | "long" selection  |
-   | -tTa | text              | none                   | OK               | selected txt | OK          | "short" selection |
-   | -TTa | Notes for page () | selected txt           | text             | OK           | OK          | "long" selection  |
-   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
-   | -FFb | no action         | none                   | OK               | OK           |             |                   |
-   | -FTb | text              | none                   | OK               | OK           |             |                   |
-   | FTFb | no heading        | selected txt to buffer | Notes for page # | OK           |             |                   |
-   | TTFb | no heading        | selected txt to buffer | OK               | OK           |             |                   |
-   | -TTb | text              | none                   | OK               | selected txt |             |                   |
-   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
-   | FFFc | Notes for page #  | none                   | OK               | OK           |             |                   |
-   | FTFc | Notes for page #  | none                   | OK               | selected txt |             |                   |
-   | TFFc | Notes for page #  | none                   | no action        | no action    |             |                   |
-   | TTFc | Notes for page #  | none                   | use existing     | selected txt |             |                   |
+   | 1234 | title             | body         | desired title    | desired body | arrow pos   | notes             |
+   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | -FaF | Notes for page () | none         | OK               | OK           | horiz error | click             |
+   | -FaT | text              | none         | OK               | OK           | horiz error | click             |
+   | -taF | selected text     | none         | OK               | OK           | OK          | "short" selection |
+   | -TaF | Notes for page () | selected txt | OK               | OK           | OK          | "long" selection  |
+   | -taT | text              | none         | OK               | selected txt | OK          | "short" selection |
+   | -TaT | Notes for page () | selected txt | text             | OK           | OK          | "long" selection  |
+   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | -FbF | no action         | none         | OK               | OK           |             |                   |
+   | -FbT | text              | none         | OK               | OK           |             |                   |
+   | FTbF | no heading        | selected txt | Notes for page # | OK           |             |                   |
+   | TTbF | no heading        | selected txt | OK               | OK           |             |                   |
+   | -TbT | text              | none         | OK               | selected txt |             |                   |
+   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | FFcF | Notes for page #  | none         | OK               | OK           |             |                   |
+   | FTcF | Notes for page #  | none         | OK               | selected txt |             |                   |
+   | TFcF | Notes for page #  | none         | no action        | no action    |             |                   |
+   | TTcF | Notes for page #  | none         | use existing     | selected txt |             |                   |
 
    A posteriori, I find that there are 6 + 5 + 4 possibilities, 8 of which I
    would alter:
-   | 1234 | title             | body                   | desired title    | desired body | arrow pos   | notes             |
-   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
-   | -FFa | Notes for page () | none                   | OK               | OK           | horiz error | click             |
-   | -FTa | text              | none                   | OK               | OK           | horiz error | click             |
-   | -tTa | text              | none                   | OK               | selected txt | OK          | "short" selection |
-   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
-   | FTFb | no heading        | selected txt to buffer | Notes for page # | OK           |             |                   |
-   | -TTb | text              | none                   | OK               | selected txt |             |                   |
-   |------+-------------------+------------------------+------------------+--------------+-------------+-------------------|
-   | FTFc | Notes for page #  | none                   | OK               | selected txt |             |                   |
-   | TFFc | Notes for page #  | none                   | no action        | no action    |             |                   |
-   | TTFc | Notes for page #  | none                   | use existing     | selected txt |             |                   |
+   | 1234 | title             | body         | desired title    | desired body | arrow pos   | notes             |
+   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | -FaF | Notes for page () | none         | OK               | OK           | horiz error | click             |
+   | -FaT | text              | none         | OK               | OK           | horiz error | click             |
+   | -taT | text              | none         | OK               | selected txt | OK          | "short" selection |
+   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | FTbF | no heading        | selected txt | Notes for page # | OK           |             |                   |
+   | -TbT | text              | none         | OK               | selected txt |             |                   |
+   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | FTcF | Notes for page #  | none         | OK               | selected txt |             |                   |
+   | TFcF | Notes for page #  | none         | no action        | no action    |             |                   |
+   | TTcF | Notes for page #  | none         | use existing     | selected txt |             |                   |
 
+** design notes
 
+*** =collection= in =org-noter-insert-note= is an alist.  would a hash be better?
 
+*** what is org-noter--view-info-notes? (C-h o)
+    org-noter--view-info-notes is a Lisp closure in ‘org-noter-core.el’.
 
+    (org-noter--view-info-notes CL-X)
+
+    Access slot "notes" of ‘org-noter--view-info’ struct CL-X.
+
+      This function has a compiler macro ‘org-noter--view-info-notes--cmacro’.
+      This function does not change global state, including the match data.
 
 
 ** Bugs to fix
