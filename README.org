@@ -1,3 +1,4 @@
+#+STARTUP: entitiespretty
 * ORG-NOTER (fork of a fork)
 ** This is a fork of the *c1-g* fork with some commits picked from *dmitrym*
    - In essence, this is close to the original *weirdNox* (Gonçalo Santos)
@@ -100,6 +101,70 @@
       This function has a compiler macro ‘org-noter--view-info-notes--cmacro’.
       This function does not change global state, including the match data.
 
+** pseudo code
+
+   - =selected= \in {N:nil, S:short (<= 80 chars), L:long}.  T = S|L
+   - =ins-mode= \in {G:page, P:precise, N:no-questions}      b = not P (G|N), T = G|P
+   - =title=    \in {N:nil, W:new, E:existing}
+     =ins-mode == no-questions= \rightarrow =title == nil=
+   - for =ins-mode == b=, default title is "Notes for page #"
+   - for precise note, default title is "Notes for page (# y-pos . x-pos)"
+   - 9 + 9 + 6 options
+     | logic | class | title    | body     | action                        |
+     |-------+-------+----------+----------+-------------------------------|
+     | SGN   | S*N   | selected | none     |                               |
+     | SPN   | S*N   | selected | none     |                               |
+     | SNN   | S*N   | selected | none     |                               |
+     |-------+-------+----------+----------+-------------------------------|
+     | LGN   | L*N   | default  | selected |                               |
+     | LPN   | L*N   | default  | selected |                               |
+     | LNN   | L*N   | default  | selected |                               |
+     |-------+-------+----------+----------+-------------------------------|
+     | SNE   | *bE   | title    | selected | add selected to existing note |
+     | SGE   | *bE   | title    | selected | add selected to existing note |
+     | LNE   | *bE   | title    | selected | add selected to existing note |
+     | LGE   | *bE   | title    | selected | add selected to existing note |
+     | NNE   | *bE   | title    | none     | focus on existing note        |
+     | NGE   | *bE   | title    | none     | focus on existing note        |
+     |-------+-------+----------+----------+-------------------------------|
+     | SPE   | *PE   | title    | selected | create new precise note       |
+     | LPE   | *PE   | title    | selected | create new precies note       |
+     | NPE   | *PE   | title    | none     | create new precise note       |
+     |-------+-------+----------+----------+-------------------------------|
+     | SGW   | *TW   | title    | selected |                               |
+     | SPW   | *TW   | title    | selected |                               |
+     | LGW   | *TW   | title    | selected |                               |
+     | LPW   | *TW   | title    | selected |                               |
+     | NGW   | *TW   | title    | none     |                               |
+     | NPW   | *TW   | title    | none     |                               |
+     |-------+-------+----------+----------+-------------------------------|
+     | NNN   | N**   | default  | none     | creates new note              |
+     | NPN   | N**   | default  | none     | creates new note              |
+     | NGN   | N**   | -        | -        | exit, focus on doc            |
+     |-------+-------+----------+----------+-------------------------------|
+
+#+begin_src lisp
+  (let (selected short-selected note-title precise-note-p location existing-title)
+    (cond
+      ((and short-selected (not note-title))
+       (setq title selected))
+      ((and selected (not note-title))
+       (setq title default)
+       (org-noter--quote-text selected)) ; nil selected will do nothing and return nil
+      ((and (not precise-note-p) existing-title)
+       (org-noter--navigate-to-existin-title)
+       (org-noter--quote-text selected))
+      ((or (and precise-note-p existing-title)
+           (and (not no-questions) note-title))
+       (setq title note-title) ; same as existing-title, but we are making a new note
+       (org-noter--quote-text selected))
+      ((and (not selected)
+            (or precise-note-p no-questions))
+       (setq title default))
+      (t
+       (org-noter--quit-insert-note))
+      ))
+#+end_src
 
 ** Bugs to fix
    1. Navigation of nested notes is spotty. =C-M-p= and =C-M-.= have trouble
