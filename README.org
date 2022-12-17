@@ -36,23 +36,18 @@
    4. Add property and/or configuration to make the arrow left or right
       pointing.
 
-** Note logic map/table
-   1. Is there an existing note for the page (from =i= or =TAB=)?  Presently,
-      this doesn't matter.  "Existing note" implementation is =selection= (#4
-      below).
-   2. Is there =selected-text=? (is it more than three lines? (=quote-p=))
-   3. Is the insertion command
+** Note logic map/table see [[pseudo code]] for a more coherent table
+   1. [tTF] Is there =selected-text=? (is it more than three lines? (=quote-p=))
+   2. [abc] Is the insertion command
       a. =M-i=
       b. =i=
       c. =TAB= (in which case 3 is always false)
-   4. Has the user supplied a =title= for the "Note:" prompt?
+   3. [tTF] Has the user supplied a =title= for the "Note:" prompt?
       does the title match a prior note title (=selection=)? then add
       =selected-text= to note with =title == selection=
 
 
-   So (a prioi) we have 8 + 8 + 4 possibilites, but prior notes don't seem to
-   always matter, and there are short and long text selections:
-   | 1234 | title             | body         | desired title    | desired body | arrow pos   | notes             |
+   | 0123 | title             | body         | desired title    | desired body | arrow pos   | notes             |
    |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
    | -FaF | Notes for page () | none         | OK               | OK           | horiz error | click             |
    | -FaT | text              | none         | OK               | OK           | horiz error | click             |
@@ -74,7 +69,7 @@
 
    A posteriori, I find that there are 6 + 5 + 4 possibilities, 8 of which I
    would alter:
-   | 1234 | title             | body         | desired title    | desired body | arrow pos   | notes             |
+   | 0123 | title             | body         | desired title    | desired body | arrow pos   | notes             |
    |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
    | -FaF | Notes for page () | none         | OK               | OK           | horiz error | click             |
    | -FaT | text              | none         | OK               | OK           | horiz error | click             |
