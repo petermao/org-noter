@@ -101,7 +101,7 @@
    - =selected= \in {N:nil, S:short (<= 80 chars), L:long}.  T = S|L
    - =ins-mode= \in {G:page, P:precise, N:no-questions}      b = not P (G|N), T = G|P
    - =title=    \in {N:nil, W:new, E:existing}
-     =ins-mode == no-questions= \rightarrow =title == nil=
+     =ins-mode == no-questions= \rightarrow =title == nil= or existing
    - for =ins-mode == b=, default title is "Notes for page #"
    - for precise note, default title is "Notes for page (# y-pos . x-pos)"
    - 9 + 9 + 6 options
@@ -138,27 +138,47 @@
      | NGN   | N**   | -        | -        | exit, focus on doc            |
      |-------+-------+----------+----------+-------------------------------|
 
-#+begin_src lisp
-  (let (selected short-selected note-title precise-note-p location existing-title)
-    (cond
-      ((and short-selected (not note-title))
-       (setq title selected))
-      ((and selected (not note-title))
-       (setq title default)
-       (org-noter--quote-text selected)) ; nil selected will do nothing and return nil
-      ((and (not precise-note-p) existing-title)
-       (org-noter--navigate-to-existin-title)
-       (org-noter--quote-text selected))
-      ((or (and precise-note-p existing-title)
-           (and (not no-questions) note-title))
-       (setq title note-title) ; same as existing-title, but we are making a new note
-       (org-noter--quote-text selected))
-      ((and (not selected)
-            (or precise-note-p no-questions))
-       (setq title default))
-      (t
-       (org-noter--quit-insert-note))
-      ))
+#+begin_src emacs-lisp
+    (let (selected-text selected-text-short note-title precise-info location selection)
+      ;; `note-title' is not the same as in org-noter-core.  It is intended to
+      ;; be the title given at the prompt (or nil when  `org-noter-insert-note-no-questions' is t)
+      (cond
+
+       ;; if the `selected-text' is "short" and there is no `note-title',
+       ;; then make a new note with `selected-text' as `title'
+        ((and selected-text-short (not note-title))
+         (setq title selected-text))
+
+        ;; if the `selected-text' is long, no title is specified
+        ;; then use the default title and quote the text
+        ((and selected-text (not note-title))
+         (setq title default)
+         (org-noter--quote-text selected-text))
+
+        ;; if the note is not "precise" and the title is a `selection' of existing note titles
+        ;; then quote `selected-text' in the note
+        ((and (not precise-info) selection)
+         (org-noter--navigate-to-existing-title)
+         (org-noter--quote-text selected-text)) ; nil `selected-text' will do nothing and return nil
+
+        ;; if the note is precise AND a selection, make a new note
+        ;; if the note has a new title, make a new note
+        ;; in both cases, quote the `selected-text', if there is any
+        ((or (and precise-info selection)
+             (and (not no-questions) note-title (not selection)))
+         (setq title note-title) ; same as `selection', but we are making a new note
+         (org-noter--quote-text selected-text))
+
+        ;; no `selected-text', no `note-title'
+        ;; create new note if it is "precise" or "no-question" using default
+        ((and (not selected-text)
+              (or precise-info no-questions))
+         (setq title default))
+
+        ;; last case -- note started, but no selection or title
+        ;; take no action 
+        (t
+         (org-noter--quit-insert-note))))
 #+end_src
 
 ** Bugs to fix
