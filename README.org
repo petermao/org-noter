@@ -176,10 +176,79 @@
          (setq title default))
 
         ;; last case -- note started, but no selection or title
-        ;; take no action 
+        ;; take no action
         (t
          (org-noter--quit-insert-note))))
 #+end_src
+
+*** org- functions/variables in org-noter-insert-note (excluding org-noter-*)
+    - org-element-contents ??
+    - org-element-map
+    - org-element-property
+    - org-element-all-elements (var)
+    - org-element-type
+    - org-at-heading-p
+    - (org-N-empty-lines-before-current 3)
+    - (org-overview)
+
+
+*** vars in org-noter-insert-note
+
+**** ast                                                            :element:
+
+***** contents                                                      :element:
+      used to determine argument to =goto-char= in =selection nil=,
+      =reference-element-cons nil= if branches [[reference-element-cons]]
+
+      This returns the first ~end~ of a ~section~ in the tree.
+      #+begin_src emacs-lisp
+        (org-element-map contents 'section
+          (lambda (section) (org-element-property :end section))
+          nil ;info
+          t  ; first-match
+          org-element-all-elements) ;no-recursion
+      #+end_src
+
+***** level                                                         :integer:
+
+**** view-info                                                      :element:
+     defined in top =let*=
+     ~location~ is a (pdf) document location, not a text buffer location
+     #+begin_src emacs-lisp
+       (org-noter--get-view-info (org-noter--get-current-view) location)
+     #+end_src
+***** reference-element-cons                                        :element:
+      defined in a let
+      #+begin_src emacs-lisp
+        (org-noter--view-info-reference-for-insertion view-info)
+      #+end_src
+*** org-noter functions to understand
+**** org-noter--get-view-info
+     "Return VIEW related information.
+
+     When optional NEW-LOCATION is provided, it will be used to find
+     the best heading to serve as a reference to create the new one
+     relative to."
+
+     location is used in the call to define [[view-info]]
+**** org-noter--get-current-view
+     "Return a vector with the current view information."
+
+     example ~[paged 76]~
+     runs =org-noter--get-current-view-hook=
+     used to set [[view-info]]
+**** org-noter--view-info-reference-for-insertion
+     used in [[reference-element-cons]]
+***** help documentation
+      org-noter--view-info-reference-for-insertion is a Lisp closure in
+      ‘org-noter-core.el’.
+
+      (org-noter--view-info-reference-for-insertion CL-X)
+
+      Access slot ~reference-for-insertion~ of =org-noter--view-info= struct CL-X.
+
+      This function has a compiler macro ‘org-noter--view-info-reference-for-insertion--cmacro’.
+      This function does not change global state, including the match data.
 
 ** Bugs to fix
    1. Navigation of nested notes is spotty. =C-M-p= and =C-M-.= have trouble
