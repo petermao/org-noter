@@ -231,14 +231,17 @@
      relative to."
 
      location is used in the call to define [[view-info]]
-**** org-noter--get-current-view
+**** org-noter--get-current-view                            :location:vector:
      "Return a vector with the current view information."
 
      example ~[paged 76]~
      runs =org-noter--get-current-view-hook=
      used to set [[view-info]]
-**** org-noter--view-info-reference-for-insertion
+**** org-noter--view-info-reference-for-insertion                   :element:
      used in [[reference-element-cons]]
+
+     this returns from [[view-info]], the value of ~reference-for-insertion~.
+     If ~:reference-for-insertion (after . #17#)~, then the #17# reference is returned?
 ***** help documentation
       org-noter--view-info-reference-for-insertion is a Lisp closure in
       ‘org-noter-core.el’.
