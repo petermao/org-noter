@@ -25,6 +25,9 @@
      2. "i".  The fundamental =org-noter-insert-note=.  User types note title
         into the minibuffer.
 
+* /ATTENTION/
+  Beyond this point, this document is meant to be read in Org-mode not in a web
+  browser.  If it is somewhat useful on a web browser, that is by accident.
 ** Note insertion desired features (WIP)
    1. The position of the precise note should be at the click (with a
       configurable horizontal offset) or at the upper-left of the selected text
@@ -36,150 +39,12 @@
    4. Add property and/or configuration to make the arrow left or right
       pointing.
 
-** Note logic map/table see [[pseudo code]] for a more coherent table
-   1. [tTF] Is there =selected-text=? (is it more than three lines? (=quote-p=))
-   2. [abc] Is the insertion command
-      a. =M-i=
-      b. =i=
-      c. =TAB= (in which case 3 is always false)
-   3. [tTF] Has the user supplied a =title= for the "Note:" prompt?
-      does the title match a prior note title (=selection=)? then add
-      =selected-text= to note with =title == selection=
-
-
-   | 0123 | title             | body         | desired title    | desired body | arrow pos   | notes             |
-   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
-   | -FaF | Notes for page () | none         | OK               | OK           | horiz error | click             |
-   | -FaT | text              | none         | OK               | OK           | horiz error | click             |
-   | -taF | selected text     | none         | OK               | OK           | OK          | "short" selection |
-   | -TaF | Notes for page () | selected txt | OK               | OK           | OK          | "long" selection  |
-   | -taT | text              | none         | OK               | selected txt | OK          | "short" selection |
-   | -TaT | Notes for page () | selected txt | text             | OK           | OK          | "long" selection  |
-   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
-   | -FbF | no action         | none         | OK               | OK           |             |                   |
-   | -FbT | text              | none         | OK               | OK           |             |                   |
-   | FTbF | no heading        | selected txt | Notes for page # | OK           |             |                   |
-   | TTbF | no heading        | selected txt | OK               | OK           |             |                   |
-   | -TbT | text              | none         | OK               | selected txt |             |                   |
-   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
-   | FFcF | Notes for page #  | none         | OK               | OK           |             |                   |
-   | FTcF | Notes for page #  | none         | OK               | selected txt |             |                   |
-   | TFcF | Notes for page #  | none         | no action        | no action    |             |                   |
-   | TTcF | Notes for page #  | none         | use existing     | selected txt |             |                   |
-
-   A posteriori, I find that there are 6 + 5 + 4 possibilities, 8 of which I
-   would alter:
-   | 0123 | title             | body         | desired title    | desired body | arrow pos   | notes             |
-   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
-   | -FaF | Notes for page () | none         | OK               | OK           | horiz error | click             |
-   | -FaT | text              | none         | OK               | OK           | horiz error | click             |
-   | -taT | text              | none         | OK               | selected txt | OK          | "short" selection |
-   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
-   | FTbF | no heading        | selected txt | Notes for page # | OK           |             |                   |
-   | -TbT | text              | none         | OK               | selected txt |             |                   |
-   |------+-------------------+--------------+------------------+--------------+-------------+-------------------|
-   | FTcF | Notes for page #  | none         | OK               | selected txt |             |                   |
-   | TFcF | Notes for page #  | none         | no action        | no action    |             |                   |
-   | TTcF | Notes for page #  | none         | use existing     | selected txt |             |                   |
-
 ** design notes
 
 *** =collection= in =org-noter-insert-note= is an alist.  would a hash be better?
 
 *** what is org-noter--view-info-notes? (C-h o)
-    org-noter--view-info-notes is a Lisp closure in ‘org-noter-core.el’.
-
-    (org-noter--view-info-notes CL-X)
-
-    Access slot "notes" of ‘org-noter--view-info’ struct CL-X.
-
-      This function has a compiler macro ‘org-noter--view-info-notes--cmacro’.
-      This function does not change global state, including the match data.
-
-** pseudo code
-
-   - =selected= \in {N:nil, S:short (<= 80 chars), L:long}.  T = S|L
-   - =ins-mode= \in {G:page, P:precise, N:no-questions}      b = not P (G|N), T = G|P
-   - =title=    \in {N:nil, W:new, E:existing}
-     =ins-mode == no-questions= \rightarrow =title == nil= or existing
-   - for =ins-mode == b=, default title is "Notes for page #"
-   - for precise note, default title is "Notes for page (# y-pos . x-pos)"
-   - 9 + 9 + 6 options
-     | logic | class | title    | body     | action                        |
-     |-------+-------+----------+----------+-------------------------------|
-     | SGN   | S*N   | selected | none     |                               |
-     | SPN   | S*N   | selected | none     |                               |
-     | SNN   | S*N   | selected | none     |                               |
-     |-------+-------+----------+----------+-------------------------------|
-     | LGN   | L*N   | default  | selected |                               |
-     | LPN   | L*N   | default  | selected |                               |
-     | LNN   | L*N   | default  | selected |                               |
-     |-------+-------+----------+----------+-------------------------------|
-     | SNE   | *bE   | title    | selected | add selected to existing note |
-     | SGE   | *bE   | title    | selected | add selected to existing note |
-     | LNE   | *bE   | title    | selected | add selected to existing note |
-     | LGE   | *bE   | title    | selected | add selected to existing note |
-     | NNE   | *bE   | title    | none     | focus on existing note        |
-     | NGE   | *bE   | title    | none     | focus on existing note        |
-     |-------+-------+----------+----------+-------------------------------|
-     | SPE   | *PE   | title    | selected | create new precise note       |
-     | LPE   | *PE   | title    | selected | create new precies note       |
-     | NPE   | *PE   | title    | none     | create new precise note       |
-     |-------+-------+----------+----------+-------------------------------|
-     | SGW   | *TW   | title    | selected |                               |
-     | SPW   | *TW   | title    | selected |                               |
-     | LGW   | *TW   | title    | selected |                               |
-     | LPW   | *TW   | title    | selected |                               |
-     | NGW   | *TW   | title    | none     |                               |
-     | NPW   | *TW   | title    | none     |                               |
-     |-------+-------+----------+----------+-------------------------------|
-     | NNN   | N**   | default  | none     | creates new note              |
-     | NPN   | N**   | default  | none     | creates new note              |
-     | NGN   | N**   | -        | -        | exit, focus on doc            |
-     |-------+-------+----------+----------+-------------------------------|
-
-#+begin_src emacs-lisp
-    (let (selected-text selected-text-short note-title precise-info location selection)
-      ;; `note-title' is not the same as in org-noter-core.  It is intended to
-      ;; be the title given at the prompt (or nil when  `org-noter-insert-note-no-questions' is t)
-      (cond
-
-       ;; if the `selected-text' is "short" and there is no `note-title',
-       ;; then make a new note with `selected-text' as `title'
-        ((and selected-text-short (not note-title))
-         (setq title selected-text))
-
-        ;; if the `selected-text' is long, no title is specified
-        ;; then use the default title and quote the text
-        ((and selected-text (not note-title))
-         (setq title default)
-         (org-noter--quote-text selected-text))
-
-        ;; if the note is not "precise" and the title is a `selection' of existing note titles
-        ;; then quote `selected-text' in the note
-        ((and (not precise-info) selection)
-         (org-noter--navigate-to-existing-title)
-         (org-noter--quote-text selected-text)) ; nil `selected-text' will do nothing and return nil
-
-        ;; if the note is precise AND a selection, make a new note
-        ;; if the note has a new title, make a new note
-        ;; in both cases, quote the `selected-text', if there is any
-        ((or (and precise-info selection)
-             (and (not no-questions) note-title (not selection)))
-         (setq title note-title) ; same as `selection', but we are making a new note
-         (org-noter--quote-text selected-text))
-
-        ;; no `selected-text', no `note-title'
-        ;; create new note if it is "precise" or "no-question" using default
-        ((and (not selected-text)
-              (or precise-info no-questions))
-         (setq title default))
-
-        ;; last case -- note started, but no selection or title
-        ;; take no action
-        (t
-         (org-noter--quit-insert-note))))
-#+end_src
+    org-noter--view-info-X pulls value of X out of a view-info object
 
 *** org- functions/variables in org-noter-insert-note (excluding org-noter-*)
     - org-element-contents ??
@@ -190,7 +55,6 @@
     - org-at-heading-p
     - (org-N-empty-lines-before-current 3)
     - (org-overview)
-
 
 *** vars in org-noter-insert-note
 
@@ -252,7 +116,146 @@
 
       This function has a compiler macro ‘org-noter--view-info-reference-for-insertion--cmacro’.
       This function does not change global state, including the match data.
+** pseudo code
+
+   - =selected= \in {N:nil, S:short (<= 80 chars), L:long}.  T = S|L
+   - =ins-mode= \in {G:page, P:precise, N:no-questions}      b = not P (G|N), T = G|P
+   - =title=    \in {N:nil, W:new, E:existing}
+     =ins-mode == no-questions= \rightarrow =title == nil= or existing
+   - for =ins-mode == b=, default title is "Notes for page #"
+   - for precise note, default title is "Notes for page (# y-pos . x-pos)"
+   - Guiding principles for table below
+     1. The preferred title is the one the user enters in the minibuffer.
+     2. Selected text should be used in the note, either as the title or in the body
+     3. Refrain from making notes in the same location with the same title
+     4. Precise notes generally have different locations, always make new
+        precise notes
+
+   - 9 + 9 + 6 options
+     | logic | class | title    | body     | action                        | matches  |
+     |       |       |          |          |                               | current  |
+     |       |       |          |          |                               | behavior |
+     |-------+-------+----------+----------+-------------------------------+----------|
+     | SGN   | S*N   | selected | none     |                               | F        |
+     | SPN   | S*N   | selected | none     |                               | T        |
+     | SNN   | S*N   | selected | none     |                               | F        |
+     |-------+-------+----------+----------+-------------------------------+----------|
+     | LGN   | L*N   | default  | selected |                               | F        |
+     | LPN   | L*N   | default  | selected |                               | T        |
+     | LNN   | L*N   | default  | selected |                               | F        |
+     |-------+-------+----------+----------+-------------------------------+----------|
+     | SNE   | *bE   | title    | selected | add selected to existing note | F        |
+     | SGE   | *bE   | title    | selected | add selected to existing note | T        |
+     | LNE   | *bE   | title    | selected | add selected to existing note | F        |
+     | LGE   | *bE   | title    | selected | add selected to existing note | F        |
+     | NNE   | *bE   | title    | none     | focus on existing note        | F        |
+     | NGE   | *bE   | title    | none     | focus on existing note        | T        |
+     |-------+-------+----------+----------+-------------------------------+----------|
+     | SPE   | *PE   | title    | selected | create new precise note       | F        |
+     | LPE   | *PE   | title    | selected | create new precies note       | F        |
+     | NPE   | *PE   | title    | none     | create new precise note       | T        |
+     |-------+-------+----------+----------+-------------------------------+----------|
+     | SGW   | *TW   | title    | selected |                               | F        |
+     | SPW   | *TW   | title    | selected |                               | F        |
+     | LGW   | *TW   | title    | selected |                               | F        |
+     | LPW   | *TW   | title    | selected |                               | F        |
+     | NGW   | *TW   | title    | none     |                               | T        |
+     | NPW   | *TW   | title    | none     |                               | T        |
+     |-------+-------+----------+----------+-------------------------------+----------|
+     | NNN   | N**   | default  | none     | creates new note              | T        |
+     | NPN   | N**   | default  | none     | creates new note              | T        |
+     | NGN   | N**   | -        | -        | exit, focus on doc            | T        |
+     |-------+-------+----------+----------+-------------------------------+----------|
+
+#+begin_src emacs-lisp
+    (let (selected-text selected-text-short note-title precise-info location selection)
+      ;; `note-title' is not the same as in org-noter-core.  It is intended to
+      ;; be the title given at the prompt (or nil when  `org-noter-insert-note-no-questions' is t)
+      (cond
+
+       ;; if the `selected-text' is "short" and there is no `note-title',
+       ;; then make a new note with `selected-text' as `title'
+        ((and selected-text-short (not note-title))
+         (setq title selected-text))
+
+        ;; if the `selected-text' is long, no title is specified
+        ;; then use the default title and quote the text
+        ((and selected-text (not note-title))
+         (setq title default)
+         (org-noter--quote-text selected-text))
+
+        ;; if the note is not "precise" and the title is a `selection' of existing note titles
+        ;; then quote `selected-text' in the note
+        ((and (not precise-info) selection)
+         (org-noter--navigate-to-existing-title)
+         (org-noter--quote-text selected-text)) ; nil `selected-text' will do nothing and return nil
+
+        ;; if the note is precise AND a selection, make a new note
+        ;; if the note has a new title, make a new note
+        ;; in both cases, quote the `selected-text', if there is any
+        ((or (and precise-info selection)
+             (and (not no-questions) note-title (not selection)))
+         (setq title note-title) ; same as `selection', but we are making a new note
+         (org-noter--quote-text selected-text))
+
+        ;; no `selected-text', no `note-title'
+        ;; create new note if it is "precise" or "no-question" using default
+        ((and (not selected-text)
+              (or precise-info no-questions))
+         (setq title default))
+
+        ;; last case -- note started, but no selection or title
+        ;; take no action
+        (t
+         (org-noter--quit-insert-note))))
+#+end_src
 
 ** Bugs to fix
    1. Navigation of nested notes is spotty. =C-M-p= and =C-M-.= have trouble
       detecting nested notes.
+** Note logic map/table see [[pseudo code]] for a more coherent table
+   1. [tTF] Is there =selected-text=? (is it more than three lines? (=quote-p=))
+   2. [abc] Is the insertion command
+      a. =M-i=
+      b. =i=
+      c. =TAB= (in which case 3 is always false)
+   3. [tTF] Has the user supplied a =title= for the "Note:" prompt?
+      does the title match a prior note title (=selection=)? then add
+      =selected-text= to note with =title == selection=
+
+
+   | 0123 |       | title             | body         | desired title    | desired body | arrow pos   | notes             |
+   |------+-------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | -FaF | NPN   | Notes for page () | none         | OK               | OK           | horiz error | click             |
+   | -FaT | NPW/E | text              | none         | OK               | OK           | horiz error | click             |
+   | -taF | SPN   | selected text     | none         | OK               | OK           | OK          | "short" selection |
+   | -TaF | LPN   | Notes for page () | selected txt | OK               | OK           | OK          | "long" selection  |
+   | -taT | SPW/E | text              | none         | OK               | selected txt | OK          | "short" selection |
+   | -TaT | LPW/E | Notes for page () | selected txt | text             | OK           | OK          | "long" selection  |
+   |------+-------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | -FbF | NGN   | no action         | none         | OK               | OK           |             |                   |
+   | -FbT | NGW/E | text              | none         | OK               | OK           |             |                   |
+   | FTbF | LGN   | no heading        | selected txt | Notes for page # | OK           |             |                   |
+   | TTbF | LG?   | no heading        | selected txt | OK               | OK           |             |                   |
+   | -TbT | LGE   | text              | none         | OK               | selected txt |             |                   |
+   |------+-------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | FFcF | NNN   | Notes for page #  | none         | OK               | OK           |             |                   |
+   | FTcF | LNN   | Notes for page #  | none         | OK               | selected txt |             |                   |
+   | TFcF | NNE?  | Notes for page #  | none         | no action        | no action    |             |                   |
+   | TTcF | LNE?  | Notes for page #  | none         | use existing     | selected txt |             |                   |
+
+   A posteriori, I find that there are 6 + 5 + 4 possibilities, 8 of which I
+   would alter:
+   | 0123 |       | title             | body         | desired title    | desired body | arrow pos   | notes             |
+   |------+-------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | -FaF | NPN   | Notes for page () | none         | OK               | OK           | horiz error | click             |
+   | -FaT | NPW/E | text              | none         | OK               | OK           | horiz error | click             |
+   | -taT | SPW/E | text              | none         | OK               | selected txt | OK          | "short" selection |
+   | -TaT | LPW/E | Notes for page () | selected txt | text             | OK           | OK          | "long" selection  |
+   |------+-------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | FTbF | LGN   | no heading        | selected txt | Notes for page # | OK           |             |                   |
+   | -TbT | LGE   | text              | none         | OK               | selected txt |             |                   |
+   |------+-------+-------------------+--------------+------------------+--------------+-------------+-------------------|
+   | FTcF | LNN   | Notes for page #  | none         | OK               | selected txt |             |                   |
+   | TFcF | NNE   | Notes for page #  | none         | no action        | no action    |             |                   |
+   | TTcF | LNE   | Notes for page #  | none         | use existing     | selected txt |             |                   |
