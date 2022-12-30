@@ -92,38 +92,37 @@
     - org-noter-insert-note-no-questions (when called with <TAB>)
 
 *** local vars in =org-noter-insert-note=
-    | var                             | type    | current implementation                                 |
-    |---------------------------------+---------+--------------------------------------------------------|
-    | ast                             | obj     | the whole shebang                                      |
-    | contents                        | obj     | derived from ~ast~                                     |
-    | window                          |         | notes-window                                           |
-    | selected-text                   | string  | user selected text or nil                              |
-    | *selected-text-short-p*         | bool    | selected text is short                                 |
-    | force-new                       |         | always nil                                             |
-    | location                        | cons    | [[org-noter--doc-approx-location]]                         |
-    | view-info                       | obj     | [[org-noter--get-view-info]]                               |
-    | inhibit-quit                    |         | always t                                               |
-    | point                           | buf pos | in notes-window                                        |
-    | minibuffer-local-completion-map | keymap? | local copy of ~org-noter--completing-read-keymap~      |
-    | empty-lines-number              | int     | dep on ~org-noter-separate-notes-from-heading~         |
-    | quote-p                         |         | t when \exists at least 3 newlines                           |
-    | default                         |         | ~selected-text~ with \n's stripped out *terrible name* |
-    | note-cons                       |         | ~view-info~:notes                                      |
-    | display                         |         | ~note-cons~:raw-value (current title)                  |
-    | begin                           | buf pos | ~note-cons~:begin (current note starting bp)           |
-    | collection                      | alist   | alist of (~display . note-cons~)                       |
-    | default-begin                   | buf pos | ~begin~ when ~default~ is ~display~                    |
-    | title                           | string  | ~default~, ~note-title~, or interactive input          |
-    | selection -> *existing-note*    | obj     | nil or matching note in ~collection~                   |
-    | note                            |         | (car ~selection~)                                      |
-    | insert-before-element           |         | (cdr ~selection~)                                      |
-    | has-content                     | bool    |                                                        |
-    | reference-element-cons          |         | ~view-info~:reference-for-insertion                    |
-    | level                           | int     | ~reference-elemement-cons~:level                       |
+    | var                          | type    | current implementation                         | used in                     |
+    |------------------------------+---------+------------------------------------------------+-----------------------------|
+    | ast                          | obj     | the whole shebang                              | ~contents~, ~level~         |
+    | contents                     | obj     | derived from ~ast~                             | new note                    |
+    | window                       |         | notes-window                                   |                             |
+    | selected-text                | string  | user selected text or nil                      |                             |
+    | *selected-text-short-p*      | bool    | selected text is short                         |                             |
+    | force-new                    |         | always nil                                     | ??                          |
+    | location                     | cons    | [[org-noter--doc-approx-location]]                 | new note                    |
+    | view-info                    | obj     | [[org-noter--get-view-info]]                       | new,page note               |
+    | point                        | buf pos | in notes-window                                | page note                   |
+    | empty-lines-number           | int     | dep on ~org-noter-separate-notes-from-heading~ | extant,new note             |
+    | quote-p                      |         | t when \exists at least 3 newlines                   | new note                    |
+    | default *maybe-title*        |         | ~selected-text~ with \n's stripped out         | precise, page note, ~title~ |
+    | note-cons                    |         | ~view-info~:notes                              | ~collection~                |
+    | display                      |         | ~note-cons~:raw-value (current title)          | page note                   |
+    | begin                        | buf pos | ~note-cons~:begin (current note starting bp)   | page note                   |
+    | collection                   | alist   | alist of (~display . note-cons~)               | ~title~, *existing-note*    |
+    | default-begin                | buf pos | ~begin~ when ~default~ is ~display~            | page note, ~collection~     |
+    | title                        | string  | ~default~, ~note-title~, or interactive input  | new note, *existing-note*   |
+    | selection -> *existing-note* | obj     | nil or matching note in ~collection~           | extant note                 |
+    | note                         |         | (car ~selection~)                              | extant note                 |
+    | insert-before-element        |         | (cdr ~selection~)                              | extant note                 |
+    | has-content                  | bool    |                                                | extant note                 |
+    | reference-element-cons       |         | ~view-info~:reference-for-insertion            | new note                    |
+    | level                        | int     | ~reference-elemement-cons~:level               | new note                    |
 
 *** nonlocal vars in =org-noter-insert-note=
     - session
-    - org-noter--completing-read-keymap
+    - inhibit-quit (localized)
+    - minibuffer-local-completion-map \leftarrow org-noter--completing-read-keymap (localized)
     - org-noter-separate-notes-from-heading (custom, nil)
     - org-element-all-elements (const)
     - org-noter-insert-selected-text-inside-note (custom, t)
