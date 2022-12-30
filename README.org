@@ -86,6 +86,49 @@
       #+begin_src emacs-lisp
         (org-noter--view-info-reference-for-insertion view-info)
       #+end_src
+*** args to =org-noter-insert-note=
+    - precise-info (when called with =M-i=)
+    - note-title (always nil?)
+    - org-noter-insert-note-no-questions (when called with <TAB>)
+
+*** local vars in =org-noter-insert-note=
+    | var                             | type    | current implementation                                 |
+    |---------------------------------+---------+--------------------------------------------------------|
+    | ast                             | obj     | the whole shebang                                      |
+    | contents                        | obj     | derived from ~ast~                                     |
+    | window                          |         | notes-window                                           |
+    | selected-text                   | string  | user selected text or nil                              |
+    | *selected-text-short-p*         | bool    | selected text is short                                 |
+    | force-new                       |         | always nil                                             |
+    | location                        | cons    | [[org-noter--doc-approx-location]]                         |
+    | view-info                       | obj     | [[org-noter--get-view-info]]                               |
+    | inhibit-quit                    |         | always t                                               |
+    | point                           | buf pos | in notes-window                                        |
+    | minibuffer-local-completion-map | keymap? | local copy of ~org-noter--completing-read-keymap~      |
+    | empty-lines-number              | int     | dep on ~org-noter-separate-notes-from-heading~         |
+    | quote-p                         |         | t when \exists at least 3 newlines                           |
+    | default                         |         | ~selected-text~ with \n's stripped out *terrible name* |
+    | note-cons                       |         | ~view-info~:notes                                      |
+    | display                         |         | ~note-cons~:raw-value (current title)                  |
+    | begin                           | buf pos | ~note-cons~:begin (current note starting bp)           |
+    | collection                      | alist   | alist of (~display . note-cons~)                       |
+    | default-begin                   | buf pos | ~begin~ when ~default~ is ~display~                    |
+    | title                           | string  | ~default~, ~note-title~, or interactive input          |
+    | selection -> *existing-note*    | obj     | nil or matching note in ~collection~                   |
+    | note                            |         | (car ~selection~)                                      |
+    | insert-before-element           |         | (cdr ~selection~)                                      |
+    | has-content                     | bool    |                                                        |
+    | reference-element-cons          |         | ~view-info~:reference-for-insertion                    |
+    | level                           | int     | ~reference-elemement-cons~:level                       |
+
+*** nonlocal vars in =org-noter-insert-note=
+    - session
+    - org-noter--completing-read-keymap
+    - org-noter-separate-notes-from-heading (custom, nil)
+    - org-element-all-elements (const)
+    - org-noter-insert-selected-text-inside-note (custom, t)
+    - *org-noter--selected-text-short-limit* (custom, 80)
+
 *** org-noter functions to understand
 **** org-noter--get-view-info
      "Return VIEW related information.
