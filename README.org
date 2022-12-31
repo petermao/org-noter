@@ -39,14 +39,14 @@
    4. Add property and/or configuration to make the arrow left or right
       pointing.
 
-** design notes
+** design notes for [[file:org-noter-core.el::1884][org-noter-insert-note]]
 
 *** =collection= in =org-noter-insert-note= is an alist.  would a hash be better?
 
 *** what is org-noter--view-info-notes? (C-h o)
     org-noter--view-info-X pulls value of X out of a view-info object
 
-*** org- functions/variables in org-noter-insert-note (excluding org-noter-*)
+*** list of org- functions/variables in org-noter-insert-note (excluding org-noter-*)
     - org-element-contents ??
     - org-element-map
     - org-element-property
@@ -56,8 +56,50 @@
     - (org-N-empty-lines-before-current 3)
     - (org-overview)
 
-*** vars in org-noter-insert-note
+*** args to =org-noter-insert-note=
+    - precise-info (when called with =M-i=)
+    - note-title (always nil?)
+    - org-noter-insert-note-no-questions (when called with <TAB>)
 
+*** local vars in =org-noter-insert-note=
+    | var                          | type    | current implementation                         | used in                     |
+    |------------------------------+---------+------------------------------------------------+-----------------------------|
+    | ast                          | obj     | the whole shebang                              | ~contents~, ~level~         |
+    | contents                     | obj     | derived from ~ast~                             | new note                    |
+    | window                       |         | notes-window                                   |                             |
+    | selected-text                | string  | user selected text or nil                      |                             |
+    | *selected-text-is-short*     | bool    | selected text is short                         |                             |
+    | force-new                    |         | always nil                                     | ??                          |
+    | location                     | cons    | [[org-noter--doc-approx-location]]                 | new note                    |
+    | view-info                    | obj     | [[org-noter--get-view-info]]                       | new,page note               |
+    | point                        | buf pos | in notes-window                                | page note                   |
+    | empty-lines-number           | int     | dep on ~org-noter-separate-notes-from-heading~ | extant,new note             |
+    | quote-p                      |         | t when \exists at least 3 newlines                   | new note                    |
+    | default *maybe-title*        |         | ~selected-text~ with \n's stripped out         | precise, page note, ~title~ |
+    | note-cons                    |         | ~view-info~:notes                              | ~collection~                |
+    | display                      |         | ~note-cons~:raw-value (current title)          | page note                   |
+    | begin                        | buf pos | ~note-cons~:begin (current note starting bp)   | page note                   |
+    | collection                   | alist   | alist of (~display . note-cons~)               | ~title~, *existing-note*    |
+    | default-begin                | buf pos | ~begin~ when ~default~ is ~display~            | page note, ~collection~     |
+    | title                        | string  | ~default~, ~note-title~, or interactive input  | new note, *existing-note*   |
+    | selection -> *existing-note* | obj     | nil or matching note in ~collection~           | extant note                 |
+    | note                         |         | (car ~selection~)                              | extant note                 |
+    | insert-before-element        |         | (cdr ~selection~)                              | extant note                 |
+    | has-content                  | bool    |                                                | extant note                 |
+    | reference-element-cons       |         | ~view-info~:reference-for-insertion            | new note                    |
+    | level                        | int     | ~reference-elemement-cons~:level               | new note                    |
+
+*** nonlocal vars in =org-noter-insert-note=
+    - org-noter-insert-note-no-questions (may be set by calling function w/ a let)
+    - session
+    - inhibit-quit (localized)
+    - minibuffer-local-completion-map \leftarrow org-noter--completing-read-keymap (localized)
+    - org-noter-separate-notes-from-heading (custom, nil)
+    - org-element-all-elements (const)
+    - org-noter-insert-selected-text-inside-note (custom, t)
+    - *org-noter--selected-text-short-limit* (custom, 80)
+
+*** vars in org-noter-insert-note
 **** ast                                                            :element:
 
 ***** contents                                                      :element:
@@ -86,48 +128,6 @@
       #+begin_src emacs-lisp
         (org-noter--view-info-reference-for-insertion view-info)
       #+end_src
-*** args to =org-noter-insert-note=
-    - precise-info (when called with =M-i=)
-    - note-title (always nil?)
-    - org-noter-insert-note-no-questions (when called with <TAB>)
-
-*** local vars in =org-noter-insert-note=
-    | var                          | type    | current implementation                         | used in                     |
-    |------------------------------+---------+------------------------------------------------+-----------------------------|
-    | ast                          | obj     | the whole shebang                              | ~contents~, ~level~         |
-    | contents                     | obj     | derived from ~ast~                             | new note                    |
-    | window                       |         | notes-window                                   |                             |
-    | selected-text                | string  | user selected text or nil                      |                             |
-    | *selected-text-short-p*      | bool    | selected text is short                         |                             |
-    | force-new                    |         | always nil                                     | ??                          |
-    | location                     | cons    | [[org-noter--doc-approx-location]]                 | new note                    |
-    | view-info                    | obj     | [[org-noter--get-view-info]]                       | new,page note               |
-    | point                        | buf pos | in notes-window                                | page note                   |
-    | empty-lines-number           | int     | dep on ~org-noter-separate-notes-from-heading~ | extant,new note             |
-    | quote-p                      |         | t when \exists at least 3 newlines                   | new note                    |
-    | default *maybe-title*        |         | ~selected-text~ with \n's stripped out         | precise, page note, ~title~ |
-    | note-cons                    |         | ~view-info~:notes                              | ~collection~                |
-    | display                      |         | ~note-cons~:raw-value (current title)          | page note                   |
-    | begin                        | buf pos | ~note-cons~:begin (current note starting bp)   | page note                   |
-    | collection                   | alist   | alist of (~display . note-cons~)               | ~title~, *existing-note*    |
-    | default-begin                | buf pos | ~begin~ when ~default~ is ~display~            | page note, ~collection~     |
-    | title                        | string  | ~default~, ~note-title~, or interactive input  | new note, *existing-note*   |
-    | selection -> *existing-note* | obj     | nil or matching note in ~collection~           | extant note                 |
-    | note                         |         | (car ~selection~)                              | extant note                 |
-    | insert-before-element        |         | (cdr ~selection~)                              | extant note                 |
-    | has-content                  | bool    |                                                | extant note                 |
-    | reference-element-cons       |         | ~view-info~:reference-for-insertion            | new note                    |
-    | level                        | int     | ~reference-elemement-cons~:level               | new note                    |
-
-*** nonlocal vars in =org-noter-insert-note=
-    - session
-    - inhibit-quit (localized)
-    - minibuffer-local-completion-map \leftarrow org-noter--completing-read-keymap (localized)
-    - org-noter-separate-notes-from-heading (custom, nil)
-    - org-element-all-elements (const)
-    - org-noter-insert-selected-text-inside-note (custom, t)
-    - *org-noter--selected-text-short-limit* (custom, 80)
-
 *** org-noter functions to understand
 **** org-noter--get-view-info
      "Return VIEW related information.
@@ -158,99 +158,114 @@
 
       This function has a compiler macro ‘org-noter--view-info-reference-for-insertion--cmacro’.
       This function does not change global state, including the match data.
-** pseudo code
+** pseudo code for [[file:org-noter-core.el::1884][org-noter-insert-note]]
+*** refactor of insert-note
+    1. simplify input args to (&optional precise-info)
+       calling states are
+       a. paGe note (direct call to this command)
+       b. Precise (precise-info is not nil) this does the click prompt
+       c. No-qs (org-noter-insert-note-no-questions t)
+    2. check for [[file:org-noter-core.el::1907][selected-text]] and set selected-text-is short
+       let (selected-text-is-short (<= (length selected-text) org-noter--max-short-length))
+    3. get [[file:org-noter-core.el::1913][location]]
+    4. if not No-qs, [[file:org-noter-core.el::1950][prompt for title]] with completing-read
+    5. if not title, generate maybe-title from template:
+       "Notes for page ~location~"
+    6. determine if title is belongs to an existing-note
+    7. enter [[logic table]] to set ~title~ and ~body~
+    8. insert note
+*** logic table
+    - =selected= \in {N:nil, S:short (<= 80 chars), L:long}.  T = S|L
+    - =ins-mode= \in {G:page, P:precise, N:no-questions}      b = not P (G|N), T = G|P
+    - =title=    \in {N:nil, W:new, E:existing}
+      =ins-mode == no-questions= \rightarrow =title == nil= or existing
+    - for =ins-mode == b=, default title is "Notes for page #"
+    - for precise note, default title is "Notes for page (# y-pos . x-pos)"
+    - Guiding principles for table below
+      1. The preferred title is the one the user enters in the minibuffer.
+      2. Selected text should be used in the note, either as the title or in the body
+      3. Refrain from making notes in the same location with the same title
+      4. Precise notes generally have different locations, always make new
+         precise notes
 
-   - =selected= \in {N:nil, S:short (<= 80 chars), L:long}.  T = S|L
-   - =ins-mode= \in {G:page, P:precise, N:no-questions}      b = not P (G|N), T = G|P
-   - =title=    \in {N:nil, W:new, E:existing}
-     =ins-mode == no-questions= \rightarrow =title == nil= or existing
-   - for =ins-mode == b=, default title is "Notes for page #"
-   - for precise note, default title is "Notes for page (# y-pos . x-pos)"
-   - Guiding principles for table below
-     1. The preferred title is the one the user enters in the minibuffer.
-     2. Selected text should be used in the note, either as the title or in the body
-     3. Refrain from making notes in the same location with the same title
-     4. Precise notes generally have different locations, always make new
-        precise notes
+    - 9 + 9 + 6 options
+      | logic | class | title    | body     | action                        | matches  |
+      |       |       |          |          |                               | current  |
+      |       |       |          |          |                               | behavior |
+      |-------+-------+----------+----------+-------------------------------+----------|
+      | SGN   | S*N   | selected | none     |                               | F        |
+      | SPN   | S*N   | selected | none     |                               | T        |
+      | SNN   | S*N   | selected | none     |                               | F        |
+      |-------+-------+----------+----------+-------------------------------+----------|
+      | LGN   | L*N   | default  | selected |                               | F        |
+      | LPN   | L*N   | default  | selected |                               | T        |
+      | LNN   | L*N   | default  | selected |                               | F        |
+      |-------+-------+----------+----------+-------------------------------+----------|
+      | SNE   | *bE   | title    | selected | add selected to existing note | F        |
+      | SGE   | *bE   | title    | selected | add selected to existing note | T        |
+      | LNE   | *bE   | title    | selected | add selected to existing note | F        |
+      | LGE   | *bE   | title    | selected | add selected to existing note | F        |
+      | NNE   | *bE   | title    | none     | focus on existing note        | F        |
+      | NGE   | *bE   | title    | none     | focus on existing note        | T        |
+      |-------+-------+----------+----------+-------------------------------+----------|
+      | SPE   | *PE   | title    | selected | create new precise note       | F        |
+      | LPE   | *PE   | title    | selected | create new precies note       | F        |
+      | NPE   | *PE   | title    | none     | create new precise note       | T        |
+      |-------+-------+----------+----------+-------------------------------+----------|
+      | SGW   | *TW   | title    | selected |                               | F        |
+      | SPW   | *TW   | title    | selected |                               | F        |
+      | LGW   | *TW   | title    | selected |                               | F        |
+      | LPW   | *TW   | title    | selected |                               | F        |
+      | NGW   | *TW   | title    | none     |                               | T        |
+      | NPW   | *TW   | title    | none     |                               | T        |
+      |-------+-------+----------+----------+-------------------------------+----------|
+      | NNN   | N**   | default  | none     | creates new note              | T        |
+      | NPN   | N**   | default  | none     | creates new note              | T        |
+      | NGN   | N**   | -        | -        | exit, focus on doc            | T        |
+      |-------+-------+----------+----------+-------------------------------+----------|
 
-   - 9 + 9 + 6 options
-     | logic | class | title    | body     | action                        | matches  |
-     |       |       |          |          |                               | current  |
-     |       |       |          |          |                               | behavior |
-     |-------+-------+----------+----------+-------------------------------+----------|
-     | SGN   | S*N   | selected | none     |                               | F        |
-     | SPN   | S*N   | selected | none     |                               | T        |
-     | SNN   | S*N   | selected | none     |                               | F        |
-     |-------+-------+----------+----------+-------------------------------+----------|
-     | LGN   | L*N   | default  | selected |                               | F        |
-     | LPN   | L*N   | default  | selected |                               | T        |
-     | LNN   | L*N   | default  | selected |                               | F        |
-     |-------+-------+----------+----------+-------------------------------+----------|
-     | SNE   | *bE   | title    | selected | add selected to existing note | F        |
-     | SGE   | *bE   | title    | selected | add selected to existing note | T        |
-     | LNE   | *bE   | title    | selected | add selected to existing note | F        |
-     | LGE   | *bE   | title    | selected | add selected to existing note | F        |
-     | NNE   | *bE   | title    | none     | focus on existing note        | F        |
-     | NGE   | *bE   | title    | none     | focus on existing note        | T        |
-     |-------+-------+----------+----------+-------------------------------+----------|
-     | SPE   | *PE   | title    | selected | create new precise note       | F        |
-     | LPE   | *PE   | title    | selected | create new precies note       | F        |
-     | NPE   | *PE   | title    | none     | create new precise note       | T        |
-     |-------+-------+----------+----------+-------------------------------+----------|
-     | SGW   | *TW   | title    | selected |                               | F        |
-     | SPW   | *TW   | title    | selected |                               | F        |
-     | LGW   | *TW   | title    | selected |                               | F        |
-     | LPW   | *TW   | title    | selected |                               | F        |
-     | NGW   | *TW   | title    | none     |                               | T        |
-     | NPW   | *TW   | title    | none     |                               | T        |
-     |-------+-------+----------+----------+-------------------------------+----------|
-     | NNN   | N**   | default  | none     | creates new note              | T        |
-     | NPN   | N**   | default  | none     | creates new note              | T        |
-     | NGN   | N**   | -        | -        | exit, focus on doc            | T        |
-     |-------+-------+----------+----------+-------------------------------+----------|
+ #+begin_src emacs-lisp
+     (let (selected-text selected-text-short note-title precise-info location selection)
+       ;; `note-title' is not the same as in org-noter-core.  It is intended to
+       ;; be the title given at the prompt (or nil when  `org-noter-insert-note-no-questions' is t)
+       (cond
 
-#+begin_src emacs-lisp
-    (let (selected-text selected-text-short note-title precise-info location selection)
-      ;; `note-title' is not the same as in org-noter-core.  It is intended to
-      ;; be the title given at the prompt (or nil when  `org-noter-insert-note-no-questions' is t)
-      (cond
+        ;; if the `selected-text' is "short" and there is no `note-title',
+        ;; then make a new note with `selected-text' as `title'
+         ((and selected-text-short (not note-title))
+          (setq title selected-text))
 
-       ;; if the `selected-text' is "short" and there is no `note-title',
-       ;; then make a new note with `selected-text' as `title'
-        ((and selected-text-short (not note-title))
-         (setq title selected-text))
+         ;; if the `selected-text' is long, no title is specified
+         ;; then use the default title and quote the text
+         ((and selected-text (not note-title))
+          (setq title default)
+          (org-noter--quote-text selected-text))
 
-        ;; if the `selected-text' is long, no title is specified
-        ;; then use the default title and quote the text
-        ((and selected-text (not note-title))
-         (setq title default)
-         (org-noter--quote-text selected-text))
+         ;; if the note is not "precise" and the title is a `selection' of existing note titles
+         ;; then quote `selected-text' in the note
+         ((and (not precise-info) selection)
+          (org-noter--navigate-to-existing-title)
+          (org-noter--quote-text selected-text)) ; nil `selected-text' will do nothing and return nil
 
-        ;; if the note is not "precise" and the title is a `selection' of existing note titles
-        ;; then quote `selected-text' in the note
-        ((and (not precise-info) selection)
-         (org-noter--navigate-to-existing-title)
-         (org-noter--quote-text selected-text)) ; nil `selected-text' will do nothing and return nil
+         ;; if the note is precise AND a selection, make a new note
+         ;; if the note has a new title, make a new note
+         ;; in both cases, quote the `selected-text', if there is any
+         ((or (and precise-info selection)
+              (and (not no-questions) note-title (not selection)))
+          (setq title note-title) ; same as `selection', but we are making a new note
+          (org-noter--quote-text selected-text))
 
-        ;; if the note is precise AND a selection, make a new note
-        ;; if the note has a new title, make a new note
-        ;; in both cases, quote the `selected-text', if there is any
-        ((or (and precise-info selection)
-             (and (not no-questions) note-title (not selection)))
-         (setq title note-title) ; same as `selection', but we are making a new note
-         (org-noter--quote-text selected-text))
+         ;; no `selected-text', no `note-title'
+         ;; create new note if it is "precise" or "no-question" using default
+         ((and (not selected-text)
+               (or precise-info no-questions))
+          (setq title default))
 
-        ;; no `selected-text', no `note-title'
-        ;; create new note if it is "precise" or "no-question" using default
-        ((and (not selected-text)
-              (or precise-info no-questions))
-         (setq title default))
-
-        ;; last case -- note started, but no selection or title
-        ;; take no action
-        (t
-         (org-noter--quit-insert-note))))
-#+end_src
+         ;; last case -- note started, but no selection or title
+         ;; take no action
+         (t
+          (org-noter--quit-insert-note))))
+ #+end_src
 
 ** Bugs to fix
    1. Navigation of nested notes is spotty. =C-M-p= and =C-M-.= have trouble
