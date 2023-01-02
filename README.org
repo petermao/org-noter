@@ -68,14 +68,14 @@
     | contents                     | obj     | derived from ~ast~                             | new note                    |
     | window                       |         | notes-window                                   |                             |
     | selected-text                | string  | user selected text or nil                      |                             |
-    | *selected-text-is-short*     | bool    | selected text is short                         |                             |
+    | *short-selected-text*        | string  | ~selected-text~ or nil                         |                             |
     | force-new                    |         | always nil                                     | ??                          |
     | location                     | cons    | [[org-noter--doc-approx-location]]                 | new note                    |
     | view-info                    | obj     | [[org-noter--get-view-info]]                       | new,page note               |
     | point                        | buf pos | in notes-window                                | page note                   |
     | empty-lines-number           | int     | dep on ~org-noter-separate-notes-from-heading~ | extant,new note             |
     | quote-p                      |         | t when \exists at least 3 newlines                   | new note                    |
-    | default *maybe-title*        |         | ~selected-text~ with \n's stripped out         | precise, page note, ~title~ |
+    | default *default-title*      |         | ~selected-text~ with \n's stripped out         | precise, page note, ~title~ |
     | note-cons                    |         | ~view-info~:notes                              | ~collection~                |
     | display                      |         | ~note-cons~:raw-value (current title)          | page note                   |
     | begin                        | buf pos | ~note-cons~:begin (current note starting bp)   | page note                   |
@@ -165,14 +165,17 @@
        a. paGe note (direct call to this command)
        b. Precise (precise-info is not nil) this does the click prompt
        c. No-qs (org-noter-insert-note-no-questions t)
-    2. check for [[file:org-noter-core.el::1907][selected-text]] and set selected-text-is short
-       let (selected-text-is-short (<= (length selected-text) org-noter--max-short-length))
+    2. check for [[file:org-noter-core.el::1907][selected-text]] and set short-selected-text
+       let (short-selected-text (if (le (length selected-text) org-noter--max-short-length)
+                                        selected-text))
     3. get [[file:org-noter-core.el::1913][location]]
     4. if not No-qs, [[file:org-noter-core.el::1950][prompt for title]] with completing-read
-    5. if not title, generate maybe-title from template:
+    5. if not title, generate default-title from template:
        "Notes for page ~location~"
     6. determine if title is belongs to an existing-note
     7. enter [[logic table]] to set ~title~ and ~body~
+       (setq title (or title short-selected-text default-title))
+       (setq body (unless (equal title short-selected-text) selected-text))
     8. insert note
 *** logic table
     - =selected= \in {N:nil, S:short (<= 80 chars), L:long}.  T = S|L
