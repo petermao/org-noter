@@ -62,32 +62,32 @@
     - org-noter-insert-note-no-questions (when called with <TAB>)
 
 *** local vars in =org-noter-insert-note=
-    | var                          | type    | current implementation                         | used in                     |
-    |------------------------------+---------+------------------------------------------------+-----------------------------|
-    | ast                          | obj     | the whole shebang                              | ~contents~, ~level~         |
-    | contents                     | obj     | derived from ~ast~                             | new note                    |
-    | window                       |         | notes-window                                   |                             |
-    | selected-text                | string  | user selected text or nil                      |                             |
-    | *short-selected-text*        | string  | ~selected-text~ or nil                         |                             |
-    | force-new                    |         | always nil                                     | ??                          |
-    | location                     | cons    | [[org-noter--doc-approx-location]]                 | new note                    |
-    | view-info                    | obj     | [[org-noter--get-view-info]]                       | new,page note               |
-    | point                        | buf pos | in notes-window                                | page note                   |
-    | empty-lines-number           | int     | dep on ~org-noter-separate-notes-from-heading~ | extant,new note             |
-    | quote-p                      |         | t when \exists at least 3 newlines                   | new note                    |
-    | default *default-title*      |         | ~selected-text~ with \n's stripped out         | precise, page note, ~title~ |
-    | note-cons                    |         | ~view-info~:notes                              | ~collection~                |
-    | display                      |         | ~note-cons~:raw-value (current title)          | page note                   |
-    | begin                        | buf pos | ~note-cons~:begin (current note starting bp)   | page note                   |
-    | collection                   | alist   | alist of (~display . note-cons~)               | ~title~, *existing-note*    |
-    | default-begin                | buf pos | ~begin~ when ~default~ is ~display~            | page note, ~collection~     |
-    | title                        | string  | ~default~, ~note-title~, or interactive input  | new note, *existing-note*   |
-    | selection -> *existing-note* | obj     | nil or matching note in ~collection~           | extant note                 |
-    | note                         |         | (car ~selection~)                              | extant note                 |
-    | insert-before-element        |         | (cdr ~selection~)                              | extant note                 |
-    | has-content                  | bool    |                                                | extant note                 |
-    | reference-element-cons       |         | ~view-info~:reference-for-insertion            | new note                    |
-    | level                        | int     | ~reference-elemement-cons~:level               | new note                    |
+    | var                           | type    | current implementation                         | used in                     |
+    |-------------------------------+---------+------------------------------------------------+-----------------------------|
+    | ast                           | obj     | the whole shebang                              | ~contents~, ~level~         |
+    | contents                      | obj     | derived from ~ast~                             | new note                    |
+    | window                        |         | notes-window                                   |                             |
+    | selected-text                 | string  | user selected text or nil                      |                             |
+    | *short-selected-text*         | string  | ~selected-text~ or nil                         |                             |
+    | force-new                     |         | always nil                                     | ??                          |
+    | location                      | cons    | [[org-noter--doc-approx-location]]                 | new note                    |
+    | view-info                     | obj     | [[org-noter--get-view-info]]                       | new,page note               |
+    | point                         | buf pos | in notes-window                                | page note                   |
+    | empty-lines-number            | int     | dep on ~org-noter-separate-notes-from-heading~ | extant,new note             |
+    | quote-p                       |         | t when \exists at least 3 newlines                   | new note                    |
+    | default *default-title*       |         | ~selected-text~ with \n's stripped out         | precise, page note, ~title~ |
+    | note-cons                     |         | ~view-info~:notes                              | ~collection~                |
+    | display                       |         | ~note-cons~:raw-value (current title)          | page note                   |
+    | begin                         | buf pos | ~note-cons~:begin (current note starting bp)   | page note                   |
+    | collection                    | alist   | alist of (~display . note-cons~)               | ~title~, *existing-title*   |
+    | default-begin                 | buf pos | ~begin~ when ~default~ is ~display~            | page note, ~collection~     |
+    | title                         | string  | ~default~, ~note-title~, or interactive input  | new note, *existing-title*  |
+    | selection -> *existing-title* | obj     | nil or matching note in ~collection~           | extant note                 |
+    | note                          |         | (car ~selection~)                              | extant note                 |
+    | insert-before-element         |         | (cdr ~selection~)                              | extant note                 |
+    | has-content                   | bool    |                                                | extant note                 |
+    | reference-element-cons        |         | ~view-info~:reference-for-insertion            | new note                    |
+    | level                         | int     | ~reference-elemement-cons~:level               | new note                    |
 
 *** nonlocal vars in =org-noter-insert-note=
     - org-noter-insert-note-no-questions (may be set by calling function w/ a let)
@@ -165,14 +165,14 @@
        a. paGe note (direct call to this command)
        b. Precise (precise-info is not nil) this does the click prompt
        c. No-qs (org-noter-insert-note-no-questions t)
-    2. check for [[file:org-noter-core.el::1907][selected-text]] and set short-selected-text
+    2. get [[file:org-noter-core.el::1913][location]]
+    3. check for [[file:org-noter-core.el::1907][selected-text]] and set short-selected-text
        let (short-selected-text (if (le (length selected-text) org-noter--max-short-length)
                                         selected-text))
-    3. get [[file:org-noter-core.el::1913][location]]
-    4. if not No-qs, [[file:org-noter-core.el::1950][prompt for title]] with completing-read
-    5. if not title, generate default-title from template:
+    4. if not title, generate default-title from template:
        "Notes for page ~location~"
-    6. determine if title is belongs to an existing-note
+    5. if not No-qs, [[file:org-noter-core.el::1950][prompt for title]] with completing-read
+    6. determine if title is belongs to an existing-title
     7. enter [[logic table]] to set ~title~ and ~body~
        (setq title (or title short-selected-text default-title))
        (setq body (unless (equal title short-selected-text) selected-text))
