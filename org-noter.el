@@ -8,7 +8,7 @@
 ;;             Dmitry M <dmitrym@gmail.com>
 ;; Homepage: https://github.com/org-noter/org-noter
 ;; Keywords: lisp pdf interleave annotate external sync notes documents org-mode
-;; Package-Requires: ((emacs "24.4") (cl-lib "0.6") (org "9.0"))
+;; Package-Requires: ((emacs "24.4") (cl-lib "0.6") (org "9.4"))
 ;; Version: 1.5.0
 
 ;; This file is not part of GNU Emacs.
@@ -307,6 +307,14 @@ marked file."
       (save-excursion (org-noter))
       (bury-buffer))
     (other-frame 1)))
+
+
+(defun org-noter-enable-org-roam-integration ()
+  "Enable org-roam integration."
+  (interactive)
+  (load "org-noter-org-roam")
+  (setq org-noter-create-session-from-document-hook
+      '(org-noter--create-session-from-document-file-supporting-org-roam)))
 
 (provide 'org-noter)
 
