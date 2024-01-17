@@ -636,6 +636,17 @@ Otherwise return the maximum value for point."
           (throw 'break id))))))
 
 (defmacro org-noter--property-or-default (name)
+  "Return the property-drawer or defcustom value of NAME.
+
+Some defcustoms can be overridden by property drawer settings.
+For example, `org-noter-notes-window-location' is
+horizontal-split by default, but can be locally specified under
+the main-heading property drawer by:
+ :NOTER_NOTES_LOCATION: vertical-split
+
+See functions `org-noter--NAME-property' which parse property
+names `org-noter--property-*', and defcustom variables
+`org-noter-NAME'."
   (let ((function-name (intern (concat "org-noter--" (symbol-name name) "-property")))
         (variable      (intern (concat "org-noter-"  (symbol-name name)))))
     `(let ((prop-value (,function-name ast)))
@@ -1498,6 +1509,7 @@ document property) will be opened."
             (t                                                    'after))))))
 
 (defmacro org-noter--view-region-finish (info &optional terminating-headline)
+  "Used by `org-noter--get-view-info' and `--view-region-add'."
   `(when ,info
      ,(if terminating-headline
           `(push (cons (aref ,info 1) (min (aref ,info 2) (org-element-property :begin ,terminating-headline)))
@@ -1506,6 +1518,7 @@ document property) will be opened."
      (setq ,info nil)))
 
 (defmacro org-noter--view-region-add (info list-name headline)
+  "Used by `org-noter--get-view-info'."
   `(progn
      (when (and ,info (not (eq (aref ,info 3) ',list-name)))
        (org-noter--view-region-finish ,info ,headline))
@@ -2413,6 +2426,11 @@ Use prefix [\\universal-argument] to TOGGLE-HIGHLIGHT."
      (org-noter-insert-precise-note toggle-highlight))))
 
 (defmacro org-noter--map-ignore-headings-with-doc-file (contents match-first &rest body)
+  "This is the workhorse navigation macro.
+
+CONTENTS is the ast returned by `org-noter--parse-root',
+MATCH-FIRST is a boolean (nil only for `org-noter-sync-prev-page-or-chapter'),
+BODY returns a headline (note navigation) or location (document navigation)."
   `(let (ignore-until-level)
      (org-element-map ,contents 'headline
        (lambda (headline)
