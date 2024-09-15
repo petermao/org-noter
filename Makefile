@@ -10,15 +10,17 @@ cask: $(CASK_DIR)
 
 .PHONY: compile
 compile: cask
-	! (cask eval "(let ((byte-compile-error-on-warn f)) \
-	                 (cask-cli/build))" 2>&1 \
-	   | egrep -a "(Warning|Error):") ; \
-	  (ret=$$? ; cask clean-elc && exit $$ret)
-
-.PHONY: test
-test: compile
+	cask emacs -batch -L . -L test \
+	--eval "(setq byte-compile-error-on-warn t)" \
+	-f batch-byte-compile $$(cask files); \
+	(ret=$$? ; cask clean-elc && exit $$ret)
+.PHONY: test coverage
+test:
+	rm -rf coverage
 	cask exec buttercup -L .
 
+coverage: test
+	genhtml -o coverage/ coverage/lcov.info
 
 # The file where the version needs to be replaced
 TARGET_FILE = org-noter.el
