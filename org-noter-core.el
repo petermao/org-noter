@@ -62,7 +62,9 @@
 
 (defvar org-noter--doc-extensions nil
   "List of extensions handled by org-noter when documents are moved.
-Used by `org-noter--update-doc-rename-in-notes'.  This variable gets filled in by supported modes, so it is not a `defcustom' variable.")
+Used by `org-noter--update-doc-rename-in-notes'.  This variable
+gets filled in by supported modes, so it is not a `defcustom'
+variable.")
 
 (defcustom org-noter-property-doc-file "NOTER_DOCUMENT"
   "Name of the property that specifies the document."
@@ -349,14 +351,14 @@ document."
 (defcustom org-noter-headline-title-decoration ""
   "Decoration (emphasis) for the headline title string.
 
-If you use the Org STARTUP option 'entitiespretty', filenames
+If you use the Org STARTUP option \"entitiespretty\", filenames
 with underscores will end up looking ugly.  This string is
 prepended and appended to the document title in the top-level
 headline, making it look nicer.
 
 Reasonable choices are: /, *, =, ~, _
 
-With '/', 'The_Title' would become '/The_Title/'."
+With \"/\", \"The_Title\" would become \"/The_Title/\"."
   :group 'org-noter
   :type 'string
   :version "28.2")
@@ -788,7 +790,6 @@ names `org-noter--property-*', and defcustom variables
       nil)))
 
 (defmacro org-noter--with-valid-session (&rest body)
-  (declare (debug (body)))
   `(let ((session org-noter--session))
      (when (org-noter--valid-session session)
        (progn ,@body))))
@@ -1082,7 +1083,6 @@ Used by interactive note-window location functions."
           (set-window-dedicated-p doc-window t))))))
 
 (defmacro org-noter--with-selected-notes-window (error-str &rest body)
-  (declare (debug ([&optional stringp] body)))
   (let ((with-error (stringp error-str)))
     `(org-noter--with-valid-session
       (let ((notes-window (org-noter--get-notes-window)))
@@ -1905,7 +1905,7 @@ will continue to sync the document references."
               (setq this-org-file-uses-noter t)
               ;; sync the document path to the new notes file
               (org-set-property org-noter-property-doc-file new-doc-file-rel-path)
-              (next-line)
+              (forward-line)
               ;; add problematic paths to the list
               (when (string-prefix-p "../" new-doc-file-rel-path)
                 (push new-doc-file-rel-path problem-path-list)))))
