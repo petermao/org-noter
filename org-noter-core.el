@@ -1812,6 +1812,8 @@ file."
         (when (org-noter--check-if-document-is-annotated-on-file document-path notes-path)
           (with-temp-buffer
             (insert-file-contents notes-path)
+            (unless (eq major-mode 'org-mode)
+              (org-mode))
             (org-with-point-at (point-min)
               (catch 'break ;stop when we find a match
                 (while (re-search-forward (org-re-property org-noter-property-doc-file) nil)
@@ -1872,6 +1874,8 @@ will continue to sync the document references."
       ;; update each document's relative path
       (with-temp-buffer
         (insert-file-contents new-notes-path)
+        (unless (eq major-mode 'org-mode)
+          (org-mode))
         (org-with-point-at (point-min)
           (while (re-search-forward (org-re-property org-noter-property-doc-file) nil t)
             (let* ((    doc-file-rel-path (match-string 3))
