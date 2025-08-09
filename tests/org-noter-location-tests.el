@@ -1,11 +1,12 @@
 ;;; -*- lexical-binding: t; -*-
 
 (add-to-list 'load-path "modules")
-(require 'org-noter-test-utils)
+
+(add-to-list 'load-path "modules")
+
 
 (defvar mock-contents-simple-notes-file-with-locations
-  "
-:PROPERTIES:
+  ":PROPERTIES:
 :ID:       FAKE_1
 :END:
 #+TITLE: Test book notes (simple)

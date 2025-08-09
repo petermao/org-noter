@@ -9,7 +9,7 @@
 ;; Homepage: https://github.com/org-noter/org-noter
 ;; Keywords: lisp pdf interleave annotate external sync notes documents org-mode
 ;; Package-Requires: ((emacs "24.4") (cl-lib "0.6") (org "9.4"))
-;; Version: v1.6.0
+;; Version: 1.6.1
 
 ;; This file is not part of GNU Emacs.
 
@@ -312,7 +312,7 @@ marked file."
 (defun org-noter-enable-org-roam-integration ()
   "Enable org-roam integration."
   (interactive)
-  (load "org-noter-org-roam")
+  (require 'org-noter-org-roam)
   (setq org-noter-create-session-from-document-hook
       '(org-noter--create-session-from-document-file-supporting-org-roam)))
 
